@@ -369,6 +369,8 @@ const PRICING={
   cemeteryPlot:{lo:1500,mid:4000,hi:12000},
   columbariumNiche:{lo:500,mid:1500,hi:4000},
   gravestone:{basicFlatMarker:{lo:300,mid:600,hi:1200},uprightHeadstone:{lo:1500,mid:2800,hi:4500},monumentPremium:{lo:3500,mid:6000,hi:12000}},
+  crematoryFee:{lo:250,mid:400,hi:600},
+  refrigeration:{lo:200,mid:350,hi:500},
   cashAdvance:{deathCertificates:{lo:50,mid:100,hi:200},permits:{lo:50,mid:150,hi:300},obituary:{lo:50,mid:150,hi:300},clergy:{lo:100,mid:200,hi:300},other:{lo:0,mid:200,hi:500}},
   /* PLACEHOLDER tax rates — Josh will finalize from Prelude */
   stateTaxRate:{AL:.04,AK:0,AZ:.056,AR:.065,CA:.0725,CO:.029,CT:.0635,DE:0,FL:.06,GA:.04,HI:.04,ID:.06,IL:.0625,IN:.07,IA:.06,KS:.065,KY:.06,LA:.0445,ME:.055,MD:.06,MA:.0625,MI:.06,MN:.06875,MS:.07,MO:.04225,MT:0,NE:.055,NV:.0685,NH:0,NJ:.06625,NM:.05125,NY:.04,NC:.0475,ND:.05,OH:.0575,OK:.045,OR:0,PA:.06,RI:.07,SC:.06,SD:.045,TN:.07,TX:.0625,UT:.0485,VT:.06,VA:.053,WA:.065,WV:.06,WI:.05,WY:.04,DC:.06}
@@ -489,6 +491,7 @@ function pkgPrice(pkg, tier, disp){
   t=add(t,merch);
   let txbl={...merch};
   if(isBurial){t=add(t,PRICING.outerBurialContainer[tier]);txbl=add(txbl,PRICING.outerBurialContainer[tier])}
+  if(!isBurial){t=add(t,PRICING.crematoryFee);t=add(t,PRICING.refrigeration)}
   Object.values(PRICING.cashAdvance).forEach(ca=>t=add(t,ca));
   const st=stSel.value||'FL';
   const rate=PRICING.stateTaxRate[st]??0.05;
@@ -640,6 +643,10 @@ function calculatePackage(){
     rows.push(['Outer Burial Container',obc,'Merchandise',1]);
     total=add(total,obc);taxable=add(taxable,obc);
   }
+  if(!isBurial){
+    const cf={...PRICING.crematoryFee};rows.push(['Crematory Fee',cf,'Services',0]);total=add(total,cf);
+    const rf={...PRICING.refrigeration};rows.push(['Refrigeration',rf,'Services',0]);total=add(total,rf);
+  }
 
   /* Cemetery / resting place costs */
   if(cemetery==='purchase'){
@@ -668,7 +675,7 @@ function calculatePackage(){
     const map={publicViewingVisitation:'Facility and preparation for viewing',funeralService:'Funeral home facilities for ceremony',memorialService:'Facilities for memorial/celebration of life',gravesideServiceCommittal:'Graveside ceremony with staff and vehicles',committalMilitaryHonors:'Military honor guard coordination and flag presentation',reception:'Reception venue and catering',witnessCremation:'Family presence at cremation',committalServiceInterment:'Committal ceremony at resting place'};
     if(map[g])inc.push(map[g]);
   });
-  inc.push(isBurial?'Casket and outer burial container':'Urn and cremation process');
+  inc.push(isBurial?'Casket and outer burial container':'Urn, crematory fee, and refrigeration');
   if(['purchase','plotPurchase'].includes(cemetery))inc.push('Cemetery plot purchase');
   if(cemetery==='nichePurchase')inc.push('Columbarium niche purchase');
   inc.push('Death certificates, permits, and paperwork','Clergy or officiant honorarium');
@@ -768,6 +775,7 @@ $('builderMode').addEventListener('submit',function(e){
 
   const isCemPlot=['cemeteryPlotOwned','cemeteryPlotBuy','cemeteryAshesOwned','cemeteryAshesBuy'].includes(rp);
   if(isBurial&&isCemPlot){const obc={...PRICING.outerBurialContainer[tier]};rows.push(['Outer Burial Container',obc,'Merchandise',1]);total=add(total,obc);taxable=add(taxable,obc)}
+  if(!isBurial){const cf={...PRICING.crematoryFee};rows.push(['Crematory Fee',cf,'Services',0]);total=add(total,cf);const rf={...PRICING.refrigeration};rows.push(['Refrigeration',rf,'Services',0]);total=add(total,rf)}
   if(rp==='cemeteryPlotBuy'||rp==='cemeteryAshesBuy'){const c={...PRICING.cemeteryPlot};rows.push(['Cemetery Plot',c,'Resting Place',0]);total=add(total,c)}
   if(rp==='mausoleumBuy'){const c={...PRICING.mausoleumCrypt};rows.push(['Mausoleum or Crypt',c,'Resting Place',0]);total=add(total,c)}
   if(rp==='columbariumBuy'){const c={...PRICING.columbariumNiche};rows.push(['Columbarium Niche',c,'Resting Place',0]);total=add(total,c)}
@@ -786,7 +794,7 @@ $('builderMode').addEventListener('submit',function(e){
 
   const inc=['Professional services of funeral director and staff','Transportation and care of remains','Death certificates, permits, and paperwork','Obituary notice','Clergy or officiant honorarium'];
   if(!isNone)gath.forEach(g=>{const map={publicViewingVisitation:'Viewing / visitation facility and preparation',funeralService:'Funeral home facilities for ceremony',memorialService:'Facilities for memorial service',gravesideServiceCommittal:'Graveside ceremony with staff',committalMilitaryHonors:'Military honor guard coordination',reception:'Reception hosting and catering',witnessCremation:'Family presence at cremation',committalServiceInterment:'Committal ceremony'};if(map[g])inc.push(map[g])});
-  inc.push(isBurial?'Casket and outer burial container':'Urn and cremation process');
+  inc.push(isBurial?'Casket and outer burial container':'Urn, crematory fee, and refrigeration');
 
   const exc=['Travel costs for out-of-state transport','Any items the family chooses to upgrade','Perpetual care fees'];
   if(['cemeteryPlotOwned','mausoleumOwned','columbariumOwned','cemeteryAshesOwned'].includes(rp))exc.push('Opening/closing fees the cemetery may charge');
