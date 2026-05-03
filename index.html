@@ -1079,6 +1079,28 @@ async function loadPlan(planId){
   }
 }
 
+/* ── Auto-save client info & basics on change (debounced) ── */
+let _infoTimer;
+function autoSaveInfo(){
+  clearTimeout(_infoTimer);
+  _infoTimer=setTimeout(()=>{
+    if(!currentPlanId)return;
+    const data={
+      clientName:$('clientName').value.trim(),
+      clientPhone:$('clientPhone').value.trim(),
+      clientEmail:$('clientEmail').value.trim(),
+      age:$('age').value,
+      state:stSel.value,
+      lastAccessedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    db.collection('plans').doc(currentPlanId).set(data,{merge:true})
+      .then(()=>showSaveStatus('Plan saved',true))
+      .catch(e=>{console.error(e);showSaveStatus('Save failed',false)});
+  },1000);
+}
+['clientName','clientPhone','clientEmail','age'].forEach(id=>$(id).addEventListener('input',autoSaveInfo));
+stSel.addEventListener('change',autoSaveInfo);
+
 /* ── Init ── */
 renderCards();
 if(currentPlanId) loadPlan(currentPlanId);
