@@ -99,7 +99,9 @@ h1{font-family:'Domaine Display',Georgia,serif;font-size:1.5rem;color:var(--tita
   <thead>
     <tr>
       <th>Client</th>
+      <th>State</th>
       <th>Estimate</th>
+      <th>Product</th>
       <th>Status</th>
       <th class="col-hide-mobile">Notes</th>
       <th>Created</th>
@@ -129,7 +131,8 @@ firebase.initializeApp({
 const db=firebase.firestore();
 
 const STATUS_LABELS={'new':'New','in-progress':'In Progress','presented':'Presented','closed-won':'Closed — Won','closed-lost':'Closed — Lost'};
-const STATUS_OPTIONS=Object.entries(STATUS_LABELS).map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+const PRODUCT_LABELS={'':'—','ga-spp':'GA - SPP','ga-encore30':'GA - Encore 30','ts-std':'TS - Std'};
+const PRODUCT_OPTIONS=Object.entries(PRODUCT_LABELS).map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
 
 let allPlans=[];
 
@@ -165,12 +168,18 @@ function renderPlans(plans){
         <div class="client-name">${d.clientName||'Unnamed'}</div>
         <div class="client-contact">${[d.clientPhone,d.clientEmail].filter(Boolean).join(' · ')||''}</div>
       </td>
+      <td>${d.state||'—'}</td>
       <td>
         <div class="plan-estimate">${mid}</div>
         <div class="plan-summary">${range}</div>
       </td>
       <td>
-        <select class="status-select" data-id="${p.id}" onclick="event.stopPropagation()">
+        <select class="status-select product-select" data-id="${p.id}" data-field="product" onclick="event.stopPropagation()">
+          ${Object.entries(PRODUCT_LABELS).map(([v,t])=>`<option value="${v}"${d.product===v?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="status-select" data-id="${p.id}" data-field="status" onclick="event.stopPropagation()">
           ${Object.entries(STATUS_LABELS).map(([v,t])=>`<option value="${v}"${d.status===v?' selected':''}>${t}</option>`).join('')}
         </select>
       </td>
@@ -190,10 +199,11 @@ function renderPlans(plans){
     });
   });
 
-  /* Wire status changes */
+  /* Wire select changes (status + product) */
   body.querySelectorAll('.status-select').forEach(sel=>{
     sel.addEventListener('change',async function(){
-      await db.collection('plans').doc(this.dataset.id).update({status:this.value});
+      const field=this.dataset.field||'status';
+      await db.collection('plans').doc(this.dataset.id).update({[field]:this.value});
     });
   });
 
@@ -223,7 +233,7 @@ db.collection('plans').orderBy('lastAccessedAt','desc').onSnapshot(snap=>{
   applyFilters();
 },err=>{
   console.error('Firestore error:',err);
-  document.getElementById('plansBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:red">Error loading plans. Check Firestore setup.</td></tr>';
+  document.getElementById('plansBody').innerHTML='<tr><td colspan="9" style="text-align:center;padding:2rem;color:red">Error loading plans. Check Firestore setup.</td></tr>';
 });
 </script>
 </body>
