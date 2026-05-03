@@ -901,6 +901,15 @@ function recalcTotal(){
   if(taxCell)taxCell.textContent=fmt(taxAmt);
   $('footTotal').textContent=fmt(r10(sum));
   $('costTotal').textContent=fmt(r10(sum));
+  /* Auto-save after edits (debounced) */
+  clearTimeout(recalcTotal._timer);
+  recalcTotal._timer=setTimeout(()=>{
+    if(currentPlanId){
+      const total={lo:r10(sum),mid:r10(sum),hi:r10(sum)};
+      const summary=$('planSummary')?.textContent||'';
+      savePlan(total,summary);
+    }
+  },1500);
 }
 
 /* ── Add custom line item ── */
@@ -1016,10 +1025,11 @@ async function savePlan(totalObj,summaryText){
   };
   try{
     if(currentPlanId){
-      await db.collection('plans').doc(currentPlanId).update(data);
+      await db.collection('plans').doc(currentPlanId).set(data,{merge:true});
     }else{
       data.status='new';
       data.notes='';
+      data.product='';
       data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
       const ref=await db.collection('plans').add(data);
       currentPlanId=ref.id;
