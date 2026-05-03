@@ -195,7 +195,7 @@ function renderPlans(plans){
   /* Wire row clicks → open plan */
   body.querySelectorAll('tr').forEach(tr=>{
     tr.addEventListener('click',()=>{
-      window.location.href='../?plan='+tr.dataset.id;
+      window.open('../?plan='+tr.dataset.id,'_blank');
     });
   });
 
