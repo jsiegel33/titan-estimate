@@ -162,9 +162,10 @@ function renderPlans(plans){
 
   body.innerHTML=plans.map(p=>{
     const d=p.data;
-    const mid=d.totalMid?'$'+Math.round(d.totalMid/10)*10:'-';
-    const lo=d.totalLo?'$'+Math.round(d.totalLo/10)*10:'';
-    const hi=d.totalHi?'$'+Math.round(d.totalHi/10)*10:'';
+    const f=n=>'$'+(Math.round(n/10)*10).toLocaleString('en-US');
+    const mid=d.totalMid?f(d.totalMid):'-';
+    const lo=d.totalLo?f(d.totalLo):'';
+    const hi=d.totalHi?f(d.totalHi):'';
     const range=lo&&hi?`${lo} – ${hi}`:'';
     const statusClass='status-'+(d.status||'new');
     return `<tr data-id="${p.id}"${d.archived?' class="archived-row"':''}>
